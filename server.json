@@ -2,13 +2,13 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.whosoeverm8/knowmind",
   "title": "knowmind",
-  "description": "Tenant-scoped knowledge graph and long-term memory backend for AI agents. Recall, relations, stats and health (read-mostly by default) plus optional store/link/unlink.",
+  "description": "Knowledge graph & long-term memory for AI agents: recall, relations, store, stats, health.",
   "websiteUrl": "https://knowmind.de",
   "repository": {
     "url": "https://github.com/WhoSoEverM8/knowmind",
     "source": "github"
   },
-  "version": "0.1.12",
+  "version": "0.1.13",
   "packages": [
     {
       "registryType": "npm",

@@ -1,0 +1,30 @@
+name: Publish to MCP Registry
+
+# Publiziert server.json in die offizielle MCP-Registry (registry.modelcontextprotocol.io).
+# Auth via GitHub-Actions-OIDC — kein Device-Code, kein Secret noetig. Die OIDC-Identitaet
+# des Repos (WhoSoEverM8) autorisiert den Namespace io.github.whosoeverm8/*.
+# Voraussetzung: das npm-Paket `knowmind` traegt `mcpName: io.github.whosoeverm8/knowmind`.
+
+on:
+  workflow_dispatch: {}
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  publish-registry:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: mcp-publisher holen
+        run: |
+          curl -sL "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_linux_amd64.tar.gz" | tar xz mcp-publisher
+      - name: server.json validieren
+        run: ./mcp-publisher validate
+      - name: Login (GitHub OIDC)
+        run: ./mcp-publisher login github-oidc
+      - name: In MCP-Registry publizieren
+        run: ./mcp-publisher publish

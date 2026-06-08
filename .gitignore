@@ -6,3 +6,5 @@ node_modules/
 .claude/
 .DS_Store
 *.log
+_mcp-publisher/
+server.json.bak*
