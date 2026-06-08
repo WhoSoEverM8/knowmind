@@ -1,0 +1,8 @@
+node_modules/
+*.tgz
+*.stackdump
+.env
+.env.*
+.claude/
+.DS_Store
+*.log

@@ -1,0 +1,59 @@
+{
+  "name": "knowmind",
+  "version": "0.1.13",
+  "mcpName": "io.github.whosoeverm8/knowmind",
+  "description": "Kommandozeile und lokale MCP-Vermittlung für Knowmind — das Gedächtnis für Ihre KI.",
+  "type": "module",
+  "license": "Apache-2.0",
+  "homepage": "https://knowmind.de",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WhoSoEverM8/knowmind.git"
+  },
+  "bugs": {
+    "url": "https://knowmind.de/support",
+    "email": "info@schuebeler-consulting.de"
+  },
+  "author": {
+    "name": "Knowmind",
+    "email": "info@schuebeler-consulting.de",
+    "url": "https://knowmind.de"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "knowmind": "bin/knowmind.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test src/*.test.js"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "^3.5.0"
+  },
+  "overrides": {
+    "global-agent": "^4.1.3"
+  },
+  "keywords": [
+    "knowmind",
+    "mcp",
+    "model-context-protocol",
+    "knowledge-graph",
+    "recall",
+    "memory",
+    "rag",
+    "claude",
+    "openai",
+    "anthropic",
+    "ai"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

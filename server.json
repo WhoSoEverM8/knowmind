@@ -1,0 +1,38 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.whosoeverm8/knowmind",
+  "title": "knowmind",
+  "description": "Tenant-scoped knowledge graph and long-term memory backend for AI agents. Recall, relations, stats and health (read-mostly by default) plus optional store/link/unlink.",
+  "websiteUrl": "https://knowmind.de",
+  "repository": {
+    "url": "https://github.com/WhoSoEverM8/knowmind",
+    "source": "github"
+  },
+  "version": "0.1.12",
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "knowmind",
+      "version": "0.1.13",
+      "transport": { "type": "stdio" },
+      "packageArguments": [
+        { "type": "positional", "value": "mcp" }
+      ],
+      "environmentVariables": [
+        {
+          "name": "KNOWMIND_TOKEN",
+          "description": "Bearer API token from the knowmind.de Dashboard -> API-Tokens (https://knowmind.de/dashboard/api-tokens)",
+          "isRequired": true,
+          "isSecret": true
+        },
+        {
+          "name": "KNOWMIND_API_URL",
+          "description": "Knowmind API base URL",
+          "isRequired": false,
+          "default": "https://knowmind.de"
+        }
+      ]
+    }
+  ]
+}
