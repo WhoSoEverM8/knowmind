@@ -1,7 +1,7 @@
 # knowmind
 
 **Das Agentengehirn aus Deutschland.** Langzeitgedächtnis und Wissensgraph für Ihre KI —
-CLI + MCP-Server. Daten und Server in Deutschland (Hosting bei Hetzner, Nürnberg).
+CLI + MCP-Server. Inhalte und Server in Deutschland (Hetzner-Rechenzentrum).
 
 <!-- mcp-name: io.github.Schubeler-Consulting/knowmind -->
 
@@ -110,9 +110,13 @@ Die zulässigen Beziehungstypen sind im Tool-Schema von `knowmind.link` als Enum
 
 ## Daten in Deutschland
 
-knowmind ist das Agentengehirn aus Deutschland: die Plattform läuft auf Servern in Deutschland
-(Hetzner, Nürnberg), die Daten verlassen den deutschen Rechtsraum nicht. Auftragsverarbeitung
-(AVV) nach Art. 28 DSGVO verfügbar: https://knowmind.de/legal/avv
+knowmind ist das Agentengehirn aus Deutschland: Ihre Inhalte (Memories, Account- und Metadaten) werden
+ausschließlich auf Servern in Deutschland (Hetzner-Rechenzentrum) gespeichert und verlassen Deutschland nicht.
+Auftragsverarbeitung (AVV) nach Art. 28 DSGVO verfügbar: https://knowmind.de/legal/avv
+
+**Hinweis (Bring-your-own-Key):** Wenn Sie eigene Schlüssel externer KI-Anbieter hinterlegen, werden Ihre
+Anfragen direkt an den von Ihnen gewählten Anbieter übermittelt. Sitzt dieser außerhalb der EU, kann dabei
+ein Drittlandtransfer stattfinden, für den Sie als Verantwortlicher zuständig sind.
 
 ## Haftung & Nutzung (Disclaimer)
 
@@ -128,5 +132,10 @@ knowmind ist das Agentengehirn aus Deutschland: die Plattform läuft auf Servern
   Datenschutzerklärung von knowmind.de:
   [AGB](https://knowmind.de/legal/agb) · [Datenschutz](https://knowmind.de/legal/datenschutz) ·
   [AVV](https://knowmind.de/legal/avv) · [Impressum](https://knowmind.de/legal/impressum)
+- **Kein Einsatz in sicherheitskritischen Bereichen:** knowmind ist ein Gedächtnis-/Recall-Dienst und
+  **nicht** für den Betrieb von selbstfahrenden Fahrzeugen, kritischer Infrastruktur, medizinischen oder
+  lebenserhaltenden Systemen oder sonstigen Anwendungen bestimmt, bei denen ein Fehler oder Ausfall zu Tod,
+  Personen-, Umwelt- oder schweren Sachschäden führen kann. Ein Einsatz in solchen Umgebungen erfolgt auf
+  alleiniges Risiko des Nutzers.
 
 Anbieter: Schübeler Consulting — Johann Jörgen Schübeler. Kontakt: info@schuebeler-consulting.de

@@ -1,5 +1,14 @@
 # Knowmind CLI — Änderungen
 
+## 0.1.17 (2026-06-08)
+
+**Rechts-Korrekturen (nach anwaltlicher Vorprüfung)**
+- Datenresidenz-Aussage korrigiert: keine widersprüchliche Stadt-Angabe mehr, und der absolute
+  Satz „verlassen den deutschen Rechtsraum nicht" um den **Bring-your-own-Key-Vorbehalt** ergänzt
+  (bei eigenen US-Anbieter-Schlüsseln kann ein Drittlandtransfer stattfinden).
+- **High-Risk-Ausschluss** ergänzt: knowmind ist nicht für selbstfahrende Fahrzeuge, kritische
+  Infrastruktur oder lebenserhaltende/medizinische Systeme bestimmt; Einsatz dort auf eigenes Risiko.
+
 ## 0.1.16 (2026-06-08)
 
 **Positionierung + rechtliche Absicherung**

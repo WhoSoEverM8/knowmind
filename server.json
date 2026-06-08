@@ -8,13 +8,13 @@
     "url": "https://github.com/Schubeler-Consulting/knowmind",
     "source": "github"
   },
-  "version": "0.1.16",
+  "version": "0.1.17",
   "packages": [
     {
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "knowmind",
-      "version": "0.1.16",
+      "version": "0.1.17",
       "transport": { "type": "stdio" },
       "packageArguments": [
         { "type": "positional", "value": "mcp" }
