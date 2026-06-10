@@ -148,8 +148,15 @@ function autoRecallHookSource() {
 // Erzeugt von: knowmind init. Idempotent ersetzbar (trägt diesen Marker).
 //
 // Ruft vor jeder echten Frage knowmind_recall auf und injiziert die Top-Treffer
-// als zusätzlichen Kontext (stdout). Fail-open: jeder Fehler -> exit 0 ohne Block.
-import { spawnSync } from "node:child_process";
+// als zusätzlichen Kontext (stdout). Direkter HTTPS-Call gegen die Plattform —
+// KEIN Subprozess/npx: das vermeidet den Windows-.cmd-Spawn-Fehler (EINVAL bei
+// spawn von npx.cmd ohne Shell, Node-Härtung CVE-2024-27980) und den langsamen
+// npx-Kaltstart; und es gibt KEINE Command-Injection, weil die Nutzer-Frage als
+// JSON-Body und nicht als Shell-Argument übergeben wird. Fail-open: jeder
+// Fehler / fehlendes Token -> exit 0 ohne Ausgabe, blockiert nie.
+import { readFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
 
 const TRIVIAL = new Set([
   "ok","okay","go","ja","nein","weiter","stop","danke","thanks","thx",
@@ -171,6 +178,60 @@ function shouldRecall(p) {
   return s.length >= 40;
 }
 
+// Token + apiUrl: ENV hat Vorrang, sonst ~/.knowmind/config.json (gleiche
+// Reihenfolge wie die CLI). Kein Token -> kein Recall (fail-open).
+function loadCreds() {
+  let file = {};
+  try {
+    file = JSON.parse(readFileSync(join(homedir(), ".knowmind", "config.json"), "utf-8"));
+  } catch { /* keine/kaputte Config -> ENV/Default */ }
+  let apiUrl = process.env.KNOWMIND_API_URL || file.apiUrl || "https://knowmind.de";
+  if (apiUrl.endsWith("/")) apiUrl = apiUrl.slice(0, -1);
+  return { apiUrl, token: process.env.KNOWMIND_TOKEN || file.token || null };
+}
+
+// Antwort von /api/mcp/v1 ist Standard-SSE (data:-Frames) ODER plain JSON.
+// Beides robust auf das JSON-RPC-Objekt mit result/error reduzieren.
+function parseBody(raw) {
+  raw = (raw || "").trim();
+  if (!raw) return null;
+  if (raw.startsWith("{")) { try { return JSON.parse(raw); } catch { return null; } }
+  let found = null;
+  for (const lineRaw of raw.split("\\n")) {
+    const line = lineRaw.trim();
+    if (line.indexOf("data:") !== 0) continue;
+    try {
+      const obj = JSON.parse(line.slice(5).trim());
+      if (obj && (obj.result || obj.error)) found = obj;
+    } catch { /* nicht-JSON data-Zeile überspringen */ }
+  }
+  return found;
+}
+
+// knowmind_recall liefert result.content[].text = JSON-String mit hits[].
+// Lesbar verdichten; bei Parse-Fehler den Rohtext durchreichen.
+function formatHits(rpc) {
+  const c = rpc && rpc.result && rpc.result.content;
+  const text = Array.isArray(c)
+    ? c.filter((b) => b && b.type === "text" && b.text).map((b) => b.text).join("\\n").trim()
+    : "";
+  if (!text) return "";
+  try {
+    const o = JSON.parse(text);
+    if (Array.isArray(o.hits)) {
+      if (o.hits.length === 0) return "";
+      return o.hits.slice(0, 5).map((h, i) => {
+        const m = h.metadata || {};
+        const title = m.title || m.name || h.source || ("Treffer " + (i + 1));
+        const score = typeof h.score === "number" ? " (" + h.score.toFixed(2) + ")" : "";
+        const snip = String(h.content || "").replace(/\\s+/g, " ").trim().slice(0, 280);
+        return "• " + title + score + ": " + snip;
+      }).join("\\n");
+    }
+  } catch { /* kein hits-JSON -> Rohtext */ }
+  return text;
+}
+
 async function main() {
   let raw = "";
   process.stdin.setEncoding("utf-8");
@@ -182,18 +243,36 @@ async function main() {
   } catch { return; }
   if (!shouldRecall(prompt)) return;
 
+  const { apiUrl, token } = loadCreds();
+  if (!token) return;
   const query = prompt.trim().slice(0, 500);
-  const r = spawnSync(
-    process.platform === "win32" ? "npx.cmd" : "npx",
-    ["-y", "knowmind", "search", query, "-k", "5", "--hops", "2"],
-    { encoding: "utf-8", timeout: 8000, env: process.env }
-  );
-  const out = (r.stdout || "").trim();
-  if (!out || /Keine Treffer/.test(out)) return;
+
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 6000);
+  let rpc = null;
+  try {
+    const res = await fetch(apiUrl + "/api/mcp/v1", {
+      method: "POST",
+      headers: {
+        "Authorization": "Bearer " + token,
+        "Content-Type": "application/json",
+        "Accept": "application/json, text/event-stream",
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0", id: 1, method: "tools/call",
+        params: { name: "knowmind_recall", arguments: { query, k: 5, hops: 2 } },
+      }),
+      signal: ctrl.signal,
+    });
+    rpc = parseBody(await res.text());
+  } catch { return; } finally { clearTimeout(timer); }
+
+  const hits = formatHits(rpc);
+  if (!hits) return;
 
   process.stdout.write(
     "═════════ knowmind RECALL (auto) ═════════\\n" +
-    out + "\\n" +
+    hits + "\\n" +
     "Diese Treffer wurden automatisch vor deiner Antwort abgerufen.\\n" +
     "Erst hier prüfen, dann Dateien lesen / Web suchen.\\n" +
     "══════════════════════════════════════════\\n"

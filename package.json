@@ -1,6 +1,6 @@
 {
   "name": "knowmind",
-  "version": "0.1.20",
+  "version": "0.1.21",
   "mcpName": "io.github.Schubeler-Consulting/knowmind",
   "description": "Knowmind — das Agentengehirn aus Deutschland: CLI + MCP-Server (Langzeitgedächtnis & Wissensgraph für Ihre KI, Server in Deutschland).",
   "type": "module",

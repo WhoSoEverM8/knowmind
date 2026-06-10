@@ -1,5 +1,21 @@
 # Knowmind CLI — Änderungen
 
+## 0.1.21 (2026-06-10)
+
+**Bugfix: `knowmind init`-Recall-Hook funktioniert jetzt auf Windows**
+- Der von `knowmind init --client claude-code` erzeugte Recall-Hook rief die Plattform
+  bisher über einen Subprozess auf (`spawnSync("npx.cmd", …)`). Auf Windows mit Node
+  ≥ 18.20.2/20.12/21.6/22 wirft das `EINVAL` (Node-Härtung CVE-2024-27980 gegen das
+  direkte Spawnen von `.cmd`/`.bat` ohne Shell) — der Hook feuerte dort nie. Gefunden im
+  echten Claude-Code-Realtest.
+- Fix: Der Hook ruft die Plattform jetzt per **direktem HTTPS-Call** (`fetch` gegen
+  `/api/mcp/v1`, `tools/call knowmind_recall`) auf — kein Subprozess, kein npx-Kaltstart
+  (Timeout 6 s, schneller), und **keine Command-Injection** mehr, weil die Nutzer-Frage
+  als JSON-Body statt als Shell-Argument übergeben wird. Token/apiUrl aus ENV oder
+  `~/.knowmind/config.json`. Treffer werden lesbar verdichtet ausgegeben (Titel + Score +
+  Auszug). Weiterhin fail-open (jeder Fehler/kein Token → exit 0). SSE- und Plain-JSON-
+  Antworten werden robust geparst.
+
 ## 0.1.20 (2026-06-10)
 
 **MCP-`instructions` erreichen jetzt den Client (initialize wird durchgereicht)**
