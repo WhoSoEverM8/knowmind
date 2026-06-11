@@ -3,7 +3,7 @@
   "maintainers": [
     "WhoSoEverM8"
   ],
-  "version": "0.1.19",
+  "version": "0.1.22",
   "description": "Das Agentengehirn aus Deutschland: persistentes Gedächtnis für KI-Agenten (Recall, Wissensgraph, bi-temporale Fakten). EU-Hosting, BYOK.",
   "homepage": "https://knowmind.de",
   "repository": {

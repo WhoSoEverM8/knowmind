@@ -19,6 +19,15 @@
  * tatsächlichen serverInfo/capabilities den Client erreichen. Bei Server-
  * Fehler/Offline fällt der Proxy auf einen lokalen Default zurück.
  *
+ * Seit 0.1.22 gibt es einen DISCOVERY-MODUS: Ist KEIN Token konfiguriert,
+ * beantwortet der Proxy `initialize`, `tools/list` und `prompts/list` über die
+ * ÖFFENTLICHE Server-Discovery (GET {apiUrl}/api/mcp/v1 — liefert Name, Version
+ * und alle Tool-Definitionen ohne Auth). Damit funktioniert Introspection
+ * (z. B. Verzeichnis-Crawler wie Glama) ohne Account; erst `tools/call`
+ * verlangt einen Token und verweist klar auf `knowmind login`. Ein
+ * konfigurierter, aber UNGÜLTIGER Token führt weiterhin zum harten
+ * Verbindungsfehler, damit MCP-Clients nicht fälschlich „connected" anzeigen.
+ *
  * Protokoll: stdio mit zeilenweise JSON (NDJSON-Style). Jedes Frame ist ein
  * vollständiges JSON-RPC-Objekt.
  */
@@ -73,6 +82,20 @@ async function forwardToServer(method, params) {
 
 function write(obj) {
   process.stdout.write(JSON.stringify(obj) + "\n");
+}
+
+/**
+ * Öffentliche Server-Discovery (kein Auth nötig): GET {apiUrl}/api/mcp/v1
+ * liefert { name, version, protocolVersion, tools: [...] }. Grundlage des
+ * Discovery-Modus ohne Token.
+ */
+async function fetchPublicDiscovery() {
+  const { apiUrl } = loadConfig();
+  const r = await fetch(`${apiUrl}/api/mcp/v1`, {
+    headers: { accept: "application/json" },
+  });
+  if (!r.ok) throw new Error(`Knowmind-Server: HTTP ${r.status}`);
+  return await r.json();
 }
 
 /**
@@ -142,10 +165,30 @@ async function probeAuth() {
 }
 
 export async function runStdioServer() {
-  // Auth einmal am Start prüfen. Das Ergebnis cachen — der MCP-Client
-  // soll sofort beim initialize wissen, ob die Verbindung wirklich steht.
-  const auth = await probeAuth();
-  if (!auth.ok) {
+  // Kein Token konfiguriert → Discovery-Modus: initialize/tools/list laufen
+  // über die öffentliche Server-Discovery, tools/call verlangt Login.
+  let discoveryMode = false;
+  try {
+    discoveryMode = !loadConfig().token;
+  } catch {
+    discoveryMode = true;
+  }
+
+  // Auth einmal am Start prüfen (nur wenn ein Token vorhanden ist). Das
+  // Ergebnis cachen — der MCP-Client soll sofort beim initialize wissen,
+  // ob die Verbindung wirklich steht.
+  const auth = discoveryMode
+    ? {
+        ok: false,
+        reason:
+          "Kein Knowmind-Token konfiguriert. Bitte `knowmind login` im Terminal ausführen.",
+      }
+    : await probeAuth();
+  if (discoveryMode) {
+    process.stderr.write(
+      "[knowmind] Kein Token — Discovery-Modus: initialize/tools/list öffentlich, tools/call erfordert `knowmind login`.\n",
+    );
+  } else if (!auth.ok) {
     process.stderr.write(`[knowmind] AUTH-FEHLER: ${auth.reason}\n`);
   }
 
@@ -168,6 +211,65 @@ export async function runStdioServer() {
       // Notifications (kein id-Feld) bekommen per JSON-RPC keine Antwort.
       const isNotification = req.id === undefined && typeof req.method === "string" && req.method.startsWith("notifications/");
       if (isNotification) continue;
+
+      if (discoveryMode) {
+        if (req.method === "ping") {
+          write({ jsonrpc: "2.0", id: req.id ?? null, result: {} });
+          continue;
+        }
+        if (req.method === "initialize") {
+          // serverInfo/protocolVersion möglichst aus der öffentlichen
+          // Discovery übernehmen; bei Fehler lokaler Default.
+          const initResult = localInitializeResult();
+          try {
+            const pub = await fetchPublicDiscovery();
+            if (pub && typeof pub === "object") {
+              if (typeof pub.protocolVersion === "string")
+                initResult.protocolVersion = pub.protocolVersion;
+              initResult.serverInfo = {
+                name: "knowmind",
+                version:
+                  typeof pub.version === "string" ? pub.version : VERSION,
+              };
+            }
+          } catch {
+            // offline → lokaler Default reicht für initialize.
+          }
+          write({ jsonrpc: "2.0", id: req.id ?? null, result: initResult });
+          continue;
+        }
+        if (req.method === "tools/list") {
+          try {
+            const pub = await fetchPublicDiscovery();
+            const tools = Array.isArray(pub?.tools) ? pub.tools : [];
+            write({ jsonrpc: "2.0", id: req.id ?? null, result: { tools } });
+          } catch (e) {
+            write({
+              jsonrpc: "2.0",
+              id: req.id ?? null,
+              error: {
+                code: -32000,
+                message: `Knowmind-Discovery nicht erreichbar: ${e instanceof Error ? e.message : String(e)}`,
+              },
+            });
+          }
+          continue;
+        }
+        if (req.method === "prompts/list") {
+          write({ jsonrpc: "2.0", id: req.id ?? null, result: { prompts: [] } });
+          continue;
+        }
+        // tools/call & Co. brauchen einen Token → klare Fehlermeldung.
+        write({
+          jsonrpc: "2.0",
+          id: req.id ?? null,
+          error: {
+            code: -32001,
+            message: `Knowmind: ${auth.reason}`,
+          },
+        });
+        continue;
+      }
 
       if (!auth.ok && req.method !== "ping") {
         // Initialize (und alles weitere) FEHLSCHLAGEN lassen, damit der

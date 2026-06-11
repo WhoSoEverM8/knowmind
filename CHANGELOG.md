@@ -1,5 +1,20 @@
 # Knowmind CLI — Änderungen
 
+## 0.1.22 (2026-06-11)
+
+**Discovery-Modus ohne Token (Introspection-fähig)**
+- Ist KEIN Token konfiguriert, beantwortet `knowmind mcp` jetzt `initialize`,
+  `tools/list` und `prompts/list` über die ÖFFENTLICHE Server-Discovery
+  (`GET /api/mcp/v1` — liefert Name, Version und alle Tool-Definitionen ohne
+  Auth). Vorher schlugen ohne Token ALLE Requests inkl. `initialize` mit
+  `-32001` fehl — Verzeichnis-Crawler (z. B. Glama) konnten den Server nicht
+  inspizieren.
+- `tools/call` verlangt weiterhin einen Token und verweist klar auf
+  `knowmind login`. Ein konfigurierter, aber ungültiger Token führt unverändert
+  zum harten Verbindungsfehler (kein falsches „connected ✓").
+- Neu: `Dockerfile` im Repo (node:20-alpine, `knowmind mcp` als Entrypoint) —
+  für Container-basierte Inspection/Nutzung.
+
 ## 0.1.21 (2026-06-10)
 
 **Bugfix: `knowmind init`-Recall-Hook funktioniert jetzt auf Windows**
